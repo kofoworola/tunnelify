@@ -1,0 +1,6 @@
+{
+  "server": {
+    "host": "localhost:2000"
+  },
+  "hide_ip": true
+}
