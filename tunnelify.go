@@ -50,33 +50,32 @@ listenLoop:
 		case <-ctx.Done():
 			break listenLoop
 		default:
-			rw, err := p.listener.Accept()
+			c, err := p.listener.Accept()
 			var h handler.ConnectionHandler
 			if err != nil {
 				p.logger.Error("error accepting a new connection")
 			}
 			// read first line of the connection and use an appropriate handler
-			bufReader := bufio.NewReader(rw)
-			reqLine, err := bufReader.ReadBytes('\n')
+			r := bufio.NewReader(c)
+			reqLine, err := r.ReadBytes('\n')
 			if err != nil {
 				p.logger.Error(fmt.Sprintf("error reading request line from connection: %v", err))
-
 			}
+
 			// check the reqline for the handler to use
 			reqDetails := strings.Split(string(reqLine), " ")
 			if len(reqDetails) != 3 {
 				p.logger.Error("invalid request start line")
 			}
 
-			c := NewReadWrapper(bufReader)
-			c.Write(reqLine)
+			cr := NewConnectionReader(reqLine, r, c)
 			if reqDetails[0] == "CONNECT" {
 				h = nil
 				continue
 				// start tunnel
 			} else if reqDetails[0] != "CONNECT" && !strings.HasPrefix("/", reqDetails[1]) {
 				// most likely http/1 so use the proxy handler
-				h = handler.NewProxyHandler(rw)
+				h = handler.NewProxyHandler(cr, reqDetails[1], c.Close)
 			}
 			go h.Handle()
 		}
