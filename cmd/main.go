@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"os"
 
 	"github.com/kofoworola/tunnelify"
@@ -22,8 +23,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	_, err = tunnelify.NewProxy(config)
+	proxy, err := tunnelify.NewServer(config)
 	if err != nil {
+		panic(err)
+	}
+
+	if err := proxy.Start(context.Background()); err != nil {
 		panic(err)
 	}
 }
