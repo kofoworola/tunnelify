@@ -14,6 +14,7 @@ import (
 
 // TODO work on logging
 // TODO allow request on few IP
+// TODO proxy authentication
 
 type Server struct {
 	config       *config.Config
@@ -70,12 +71,12 @@ listenLoop:
 
 			cr := NewConnectionReader(reqLine, r, c)
 			if reqDetails[0] == "CONNECT" {
-				h = nil
-				continue
+				fmt.Println("is connect")
+				h, _ = handler.NewTunnelHandler(c, reqDetails[1], strings.TrimSpace(reqDetails[2]), c.Close)
 				// start tunnel
 			} else if reqDetails[0] != "CONNECT" && !strings.HasPrefix("/", reqDetails[1]) {
 				// most likely http/1 so use the proxy handler
-				h = handler.NewProxyHandler(cr, reqDetails[1], c.Close)
+				h = handler.NewProxyHandler(cr, c.RemoteAddr().String(), p.config, c.Close)
 			}
 			go h.Handle()
 		}

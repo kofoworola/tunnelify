@@ -8,9 +8,11 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
-	"sync"
 	"time"
+
+	"github.com/kofoworola/tunnelify/config"
 )
 
 var (
@@ -19,12 +21,9 @@ var (
 
 const (
 	proxyConnectionKey = "Proxy-Connection"
+	forwardedForKey    = "X-Forwarded-For"
+	forwardedHost      = "X-Forwarded-Host"
 )
-
-type connWrapper struct {
-	net.Conn
-	mu sync.Mutex
-}
 
 type Request struct {
 	URI     string
@@ -36,20 +35,25 @@ type Request struct {
 
 type ProxyHandler struct {
 	incoming io.ReadWriter
-	outgoing *connWrapper
+	outgoing net.Conn
 
 	connClose CloseFunc
+
+	hideIP   bool
+	originIP string
 }
 
 //TODO add timeout to config
 // TODO add dial timout to config
 // TODO add check redirect to config
-func NewProxyHandler(reader io.ReadWriter, serverURL string, closeFunc CloseFunc) *ProxyHandler {
+func NewProxyHandler(reader io.ReadWriter, originIp string, config *config.Config, closeFunc CloseFunc) *ProxyHandler {
 	// the reason we don't dial initially to the server is to prevent a bottleneck
 	// for multiple proxy connections coming in
 	return &ProxyHandler{
 		incoming:  reader,
 		connClose: closeFunc,
+		hideIP:    config.HideIP,
+		originIP:  originIp,
 	}
 }
 
@@ -76,7 +80,7 @@ func (p *ProxyHandler) Handle() {
 				p.connClose()
 				break
 			}
-			p.outgoing = &connWrapper{Conn: conn}
+			p.outgoing = conn
 			go p.listenToServerIncoming()
 			defer conn.Close()
 		}
@@ -85,12 +89,11 @@ func (p *ProxyHandler) Handle() {
 			fmt.Printf("error preparing request: %v", err)
 			return
 		}
-		p.outgoing.mu.Lock()
+		req.Write(os.Stdout)
 		if err := req.Write(p.outgoing); err != nil {
 			fmt.Printf("error writing to server: %v", err)
 			break
 		}
-		p.outgoing.mu.Unlock()
 		shouldClose := p.shouldCloseConnection(req)
 		if shouldClose {
 			break
@@ -130,7 +133,18 @@ func (p *ProxyHandler) prepareRequest(req *http.Request) error {
 	}
 	req.URL = url
 	req.RequestURI = ""
-	delete(req.Header, "Proxy-Connection")
+	delete(req.Header, proxyConnectionKey)
+
+	// add origin ip if enabled in config
+	if !p.hideIP {
+		forwarded, ok := req.Header[forwardedForKey]
+		if !ok || len(forwarded) < 1 {
+			req.Header.Set(forwardedForKey, p.originIP)
+		} else {
+			req.Header.Set(forwardedForKey, fmt.Sprintf("%s, %s", forwarded[0], p.originIP))
+		}
+		req.Header.Set(forwardedHost, req.Host)
+	}
 	return nil
 }
 
