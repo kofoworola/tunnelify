@@ -7,13 +7,14 @@ import (
 	"strings"
 
 	"github.com/kofoworola/tunnelify/config"
+	"github.com/kofoworola/tunnelify/logging"
 )
 
 type CloseFunc func() error
 
 type ConnectionHandler interface {
 	// TODO think of using context to handle shutdown
-	Handle()
+	Handle(logger *logging.Logger)
 }
 
 func writeResponse(out io.Writer, version string, status string, header http.Header) error {

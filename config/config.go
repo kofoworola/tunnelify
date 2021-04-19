@@ -12,6 +12,18 @@ type Config struct {
 	HostName string
 	HideIP   bool
 	Auth     []string
+	Logging  []string
+}
+
+var defaults = map[string]interface{}{
+	"hideIP":  false,
+	"logging": []string{},
+}
+
+func init() {
+	for key, item := range defaults {
+		viper.SetDefault(key, item)
+	}
 }
 
 func LoadConfig(path string) (*Config, error) {
@@ -28,6 +40,7 @@ func LoadConfig(path string) (*Config, error) {
 		HostName: viper.GetString("server.host"),
 		HideIP:   viper.GetBool("hideIP"),
 		Auth:     viper.GetStringSlice("server.auth"),
+		Logging:  viper.GetStringSlice("logging"),
 	}, nil
 }
 

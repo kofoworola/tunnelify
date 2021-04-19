@@ -4,7 +4,6 @@ import (
 	"context"
 	"os"
 
-	"github.com/kofoworola/tunnelify"
 	"github.com/kofoworola/tunnelify/config"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
@@ -23,7 +22,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	proxy, err := tunnelify.NewServer(config)
+	proxy, err := NewServer(config)
 	if err != nil {
 		panic(err)
 	}

@@ -11,11 +11,10 @@ import (
 	"time"
 
 	"github.com/kofoworola/tunnelify/config"
+	"github.com/kofoworola/tunnelify/logging"
 )
 
-var (
-	invalidRequestFormat = errors.New("invalid request format")
-)
+var invalidRequestFormat = errors.New("invalid request format")
 
 // Header Keys
 const (
@@ -45,7 +44,7 @@ type ProxyHandler struct {
 	cfg      *config.Config
 }
 
-//TODO add timeout to config
+// TODO add timeout to config
 // TODO add dial timout to config
 func NewProxyHandler(reader io.ReadWriter, originIp string, config *config.Config, closeFunc CloseFunc) *ProxyHandler {
 	// the reason we don't dial initially to the server is to prevent a bottleneck
@@ -58,9 +57,9 @@ func NewProxyHandler(reader io.ReadWriter, originIp string, config *config.Confi
 	}
 }
 
-// TODO handle errors properly in goroutine using a context passed logger or something
-// TODO handle
-func (p *ProxyHandler) Handle() {
+func (p *ProxyHandler) Handle(logger *logging.Logger) {
+	logger = logger.With("type", "proxy")
+
 	for {
 		req, err := http.ReadRequest(bufio.NewReader(p.incoming))
 		if err != nil {
@@ -69,21 +68,22 @@ func (p *ProxyHandler) Handle() {
 				p.connClose()
 				return
 			}
-			fmt.Printf("error parsing request: %v", err)
+			logger.Warn("error parsing request")
 			return
 		}
 
 		// setup outgoing connection if it hasn't been setUp
+		// TODO return proper response to client
 		if p.outgoing == nil {
 			addr := fmt.Sprintf("%s:%s", req.URL.Host, req.URL.Scheme)
 			conn, err := net.DialTimeout("tcp", addr, time.Second*30)
 			if err != nil {
-				fmt.Printf("error dialing to server: %v", err)
+				logger.Warn("error dialing destination server")
 				p.connClose()
 				break
 			}
 			p.outgoing = conn
-			go p.listenToServerIncoming()
+			go p.listenToServerIncoming(logger)
 			defer conn.Close()
 		}
 
@@ -96,18 +96,19 @@ func (p *ProxyHandler) Handle() {
 				http.Header{
 					proxyAuthenticate: {`Basic realm="Access to the internal site"`},
 				}); err != nil {
-				fmt.Printf("error writing response: %v", err)
+				logger.Warn("error writing response")
 			}
-			break
+			continue
 		}
 
+		// TODO consider combinging these two (do not attempt to parse URL to url.URL)
 		if err := p.prepareRequest(req); err != nil {
-			fmt.Printf("error preparing request: %v", err)
-			return
+			logger.WarnError("error forwarding request", err)
+			continue
 		}
 		if err := req.Write(p.outgoing); err != nil {
-			fmt.Printf("error writing to server: %v", err)
-			break
+			logger.WarnError("error forwarding request", err)
+			continue
 		}
 		shouldClose := p.shouldCloseConnection(req)
 		if shouldClose {
@@ -115,11 +116,11 @@ func (p *ProxyHandler) Handle() {
 		}
 	}
 	if err := p.connClose(); err != nil {
-		fmt.Printf("error closing connection: %v", err)
+		logger.Warn("error closing connection")
 	}
 }
 
-func (p *ProxyHandler) listenToServerIncoming() {
+func (p *ProxyHandler) listenToServerIncoming(logger *logging.Logger) {
 	reader := bufio.NewReader(p.outgoing)
 	for {
 		line, err := reader.ReadBytes('\n')
@@ -127,12 +128,12 @@ func (p *ProxyHandler) listenToServerIncoming() {
 			if err == io.EOF {
 				break
 			}
-			fmt.Printf("error reading response: %v\n", err)
+			logger.WarnError("could not read response from server", err)
 			break
 		}
 		// TODO fix code reaching here
 		if _, err := p.incoming.Write(line); err != nil {
-			fmt.Printf("error writing response: %v\n", err)
+			logger.WarnError("error writing to client", err)
 		}
 	}
 }

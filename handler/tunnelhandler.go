@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/kofoworola/tunnelify/config"
+	"github.com/kofoworola/tunnelify/logging"
 )
 
 const bufferSize = 4096
@@ -38,11 +39,13 @@ func NewTunnelHandler(cfg *config.Config, incoming io.ReadWriter, server string,
 	}
 }
 
-func (h *TunnelHandler) Handle() {
+func (h *TunnelHandler) Handle(logger *logging.Logger) {
+	logger = logger.With("type", "tunnel")
+
 	// get first req
 	req, err := http.ReadRequest(bufio.NewReader(h.incoming))
 	if err != nil {
-		fmt.Printf("error reading request from connection: %v", err)
+		logger.Warn("could not read request")
 		return
 	}
 	// check the authorization
@@ -54,7 +57,7 @@ func (h *TunnelHandler) Handle() {
 			http.Header{
 				proxyAuthenticate: {`Basic realm="Access to the internal site"`},
 			}); err != nil {
-			fmt.Printf("error writing response: %v", err)
+			logger.WarnError("error writing response", err)
 		}
 		return
 
@@ -63,15 +66,16 @@ func (h *TunnelHandler) Handle() {
 	if h.outgoing == nil {
 		c, err := h.setupOutbound()
 		if err != nil {
-			fmt.Printf("error setting up outbound connection %v\n", err)
+			logger.WarnError("could not setup outbound", err)
+			return
 		}
 		defer c()
 		response := fmt.Sprintf("%s 200 OK\n\n", h.httpVersion)
 		h.incoming.Write([]byte(response))
 	}
 	wg.Add(2)
-	go readAndWrite(h.incoming, h.outgoing)
-	go readAndWrite(h.outgoing, h.incoming)
+	go readAndWrite(logger, h.incoming, h.outgoing)
+	go readAndWrite(logger, h.outgoing, h.incoming)
 
 	// handle this properly because it is going to be impossible to close the connections
 	// from this (the tunnel) end atm
@@ -79,7 +83,7 @@ func (h *TunnelHandler) Handle() {
 	h.closeConn()
 }
 
-func readAndWrite(readFrom io.Reader, writeTo io.Writer) {
+func readAndWrite(logger *logging.Logger, readFrom io.Reader, writeTo io.Writer) {
 	defer wg.Done()
 	for {
 		var shouldBreak bool
@@ -88,14 +92,14 @@ func readAndWrite(readFrom io.Reader, writeTo io.Writer) {
 		if err != nil {
 			shouldBreak = true
 			if err != io.EOF {
-				fmt.Printf("error reading data: %v\n", err)
+				logger.WarnError("couldn't read bytes", err)
 				break
 			}
 		}
 		dat = dat[:n]
 
 		if _, err := writeTo.Write(dat); err != nil {
-			fmt.Printf("error writing: %v\n", err)
+			logger.WarnError("couldn't write bytes", err)
 			break
 		}
 		if shouldBreak {

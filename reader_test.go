@@ -1,4 +1,4 @@
-package tunnelify
+package main
 
 import (
 	"bytes"
@@ -19,5 +19,4 @@ func TestReadWrapperReadWrite(t *testing.T) {
 	if string(dat) != writtenData+stringData {
 		t.Fatalf("expected: '%s' got:'%s'", writtenData+stringData, string(dat))
 	}
-
 }

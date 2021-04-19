@@ -1,11 +1,11 @@
-package tunnelify
+package main
 
 import (
 	"bytes"
 	"io"
 )
 
-//TODO implement the close method
+// TODO implement the close method
 
 // Read wrapper is a wrapper around an io.ReadWriter
 // Writing to this, writes to the underlying ReadWriter ,
