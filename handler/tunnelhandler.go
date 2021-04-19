@@ -1,11 +1,15 @@
 package handler
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"net"
+	"net/http"
 	"sync"
 	"time"
+
+	"github.com/kofoworola/tunnelify/config"
 )
 
 const bufferSize = 4096
@@ -20,18 +24,42 @@ type TunnelHandler struct {
 	httpVersion string
 
 	closeConn CloseFunc
+
+	cfg *config.Config
 }
 
-func NewTunnelHandler(incoming io.ReadWriter, server string, httpVersion string, closeConn CloseFunc) (*TunnelHandler, error) {
+func NewTunnelHandler(cfg *config.Config, incoming io.ReadWriter, server string, httpVersion string, closeConn CloseFunc) *TunnelHandler {
 	return &TunnelHandler{
 		incoming:    incoming,
 		serverURL:   server,
 		httpVersion: httpVersion,
 		closeConn:   closeConn,
-	}, nil
+		cfg:         cfg,
+	}
 }
 
 func (h *TunnelHandler) Handle() {
+	// get first req
+	req, err := http.ReadRequest(bufio.NewReader(h.incoming))
+	if err != nil {
+		fmt.Printf("error reading request from connection: %v", err)
+		return
+	}
+	// check the authorization
+	if !checkAuthorization(h.cfg, req) {
+		if err := writeResponse(
+			h.incoming,
+			req.Proto,
+			"407 Proxy Authentication Required",
+			http.Header{
+				proxyAuthenticate: {`Basic realm="Access to the internal site"`},
+			}); err != nil {
+			fmt.Printf("error writing response: %v", err)
+		}
+		return
+
+	}
+
 	if h.outgoing == nil {
 		c, err := h.setupOutbound()
 		if err != nil {

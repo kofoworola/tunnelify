@@ -71,11 +71,8 @@ listenLoop:
 
 			cr := NewConnectionReader(reqLine, r, c)
 			if reqDetails[0] == "CONNECT" {
-				fmt.Println("is connect")
-				h, _ = handler.NewTunnelHandler(c, reqDetails[1], strings.TrimSpace(reqDetails[2]), c.Close)
-				// start tunnel
+				h = handler.NewTunnelHandler(p.config, cr, reqDetails[1], strings.TrimSpace(reqDetails[2]), c.Close)
 			} else if reqDetails[0] != "CONNECT" && !strings.HasPrefix("/", reqDetails[1]) {
-				// most likely http/1 so use the proxy handler
 				h = handler.NewProxyHandler(cr, c.RemoteAddr().String(), p.config, c.Close)
 			}
 			go h.Handle()

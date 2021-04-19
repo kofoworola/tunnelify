@@ -8,8 +8,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"os"
-	"strings"
 	"time"
 
 	"github.com/kofoworola/tunnelify/config"
@@ -19,10 +17,14 @@ var (
 	invalidRequestFormat = errors.New("invalid request format")
 )
 
+// Header Keys
 const (
 	proxyConnectionKey = "Proxy-Connection"
 	forwardedForKey    = "X-Forwarded-For"
 	forwardedHost      = "X-Forwarded-Host"
+	proxyAuthorization = "Proxy-Authorization"
+	proxyAuthenticate  = "Proxy-Authenticate"
+	contentLength      = "Content-Length"
 )
 
 type Request struct {
@@ -39,21 +41,20 @@ type ProxyHandler struct {
 
 	connClose CloseFunc
 
-	hideIP   bool
 	originIP string
+	cfg      *config.Config
 }
 
 //TODO add timeout to config
 // TODO add dial timout to config
-// TODO add check redirect to config
 func NewProxyHandler(reader io.ReadWriter, originIp string, config *config.Config, closeFunc CloseFunc) *ProxyHandler {
 	// the reason we don't dial initially to the server is to prevent a bottleneck
 	// for multiple proxy connections coming in
 	return &ProxyHandler{
 		incoming:  reader,
 		connClose: closeFunc,
-		hideIP:    config.HideIP,
 		originIP:  originIp,
+		cfg:       config,
 	}
 }
 
@@ -71,6 +72,7 @@ func (p *ProxyHandler) Handle() {
 			fmt.Printf("error parsing request: %v", err)
 			return
 		}
+
 		// setup outgoing connection if it hasn't been setUp
 		if p.outgoing == nil {
 			addr := fmt.Sprintf("%s:%s", req.URL.Host, req.URL.Scheme)
@@ -85,11 +87,24 @@ func (p *ProxyHandler) Handle() {
 			defer conn.Close()
 		}
 
+		// check the authorization
+		if checkAuthorization(p.cfg, req) {
+			if err := writeResponse(
+				p.incoming,
+				req.Proto,
+				"407 Proxy Authentication Required",
+				http.Header{
+					proxyAuthenticate: {`Basic realm="Access to the internal site"`},
+				}); err != nil {
+				fmt.Printf("error writing response: %v", err)
+			}
+			break
+		}
+
 		if err := p.prepareRequest(req); err != nil {
 			fmt.Printf("error preparing request: %v", err)
 			return
 		}
-		req.Write(os.Stdout)
 		if err := req.Write(p.outgoing); err != nil {
 			fmt.Printf("error writing to server: %v", err)
 			break
@@ -125,7 +140,6 @@ func (p *ProxyHandler) listenToServerIncoming() {
 // prepareRequest prepares the request to be sent to the server
 // by removing the RequestURI and setting the req.URL
 // then formating the headers
-// TODO handle headers and remove all proxy based headers
 func (p *ProxyHandler) prepareRequest(req *http.Request) error {
 	url, err := url.Parse(req.RequestURI)
 	if err != nil {
@@ -136,7 +150,7 @@ func (p *ProxyHandler) prepareRequest(req *http.Request) error {
 	delete(req.Header, proxyConnectionKey)
 
 	// add origin ip if enabled in config
-	if !p.hideIP {
+	if !p.cfg.HideIP {
 		forwarded, ok := req.Header[forwardedForKey]
 		if !ok || len(forwarded) < 1 {
 			req.Header.Set(forwardedForKey, p.originIP)
@@ -146,21 +160,6 @@ func (p *ProxyHandler) prepareRequest(req *http.Request) error {
 		req.Header.Set(forwardedHost, req.Host)
 	}
 	return nil
-}
-
-// TODO drain the response
-func (p *ProxyHandler) writeResponse(resp *http.Response) {
-	defer resp.Body.Close()
-	// write the status line e.g HTTP/1.1 404 Not Found
-	p.incoming.Write([]byte(fmt.Sprintf("%s %s\n", resp.Proto, resp.Status)))
-
-	// write the headers
-	for key, val := range resp.Header {
-		headerString := fmt.Sprintf("%s:%s\n", key, strings.Join(val, ","))
-		p.incoming.Write([]byte(headerString))
-	}
-	p.incoming.Write([]byte("\n"))
-	io.Copy(p.incoming, resp.Body)
 }
 
 func (p *ProxyHandler) shouldCloseConnection(req *http.Request) bool {

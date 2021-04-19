@@ -1,6 +1,7 @@
 package config
 
 import (
+	"encoding/base64"
 	"fmt"
 	"strings"
 
@@ -10,6 +11,7 @@ import (
 type Config struct {
 	HostName string
 	HideIP   bool
+	Auth     []string
 }
 
 func LoadConfig(path string) (*Config, error) {
@@ -24,6 +26,32 @@ func LoadConfig(path string) (*Config, error) {
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	return &Config{
 		HostName: viper.GetString("server.host"),
-		HideIP:   viper.GetBool("hide_ip"),
+		HideIP:   viper.GetBool("hideIP"),
+		Auth:     viper.GetStringSlice("server.auth"),
 	}, nil
+}
+
+func (c *Config) CheckAuthString(auth string) bool {
+	split := strings.Split(auth, " ")
+	if len(split) != 2 || split[0] != "Basic" {
+		return false
+	}
+
+	auth = split[1]
+	decoded, err := base64.StdEncoding.DecodeString(auth)
+	if err != nil {
+		return false
+	}
+	var found bool
+	for _, item := range c.Auth {
+		if string(decoded) == item {
+			found = true
+			break
+		}
+	}
+	return found
+}
+
+func (c *Config) HasAuth() bool {
+	return len(c.Auth) > 0
 }
