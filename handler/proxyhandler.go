@@ -8,7 +8,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"time"
 
 	"github.com/kofoworola/tunnelify/config"
 	"github.com/kofoworola/tunnelify/logging"
@@ -76,7 +75,7 @@ func (p *ProxyHandler) Handle(logger *logging.Logger) {
 		// TODO return proper response to client
 		if p.outgoing == nil {
 			addr := fmt.Sprintf("%s:%s", req.URL.Host, req.URL.Scheme)
-			conn, err := net.DialTimeout("tcp", addr, time.Second*30)
+			conn, err := net.DialTimeout("tcp", addr, p.cfg.Timeout)
 			if err != nil {
 				logger.Warn("error dialing destination server")
 				p.connClose()
@@ -88,7 +87,7 @@ func (p *ProxyHandler) Handle(logger *logging.Logger) {
 		}
 
 		// check the authorization
-		if checkAuthorization(p.cfg, req) {
+		if !checkAuthorization(p.cfg, req) {
 			if err := writeResponse(
 				p.incoming,
 				req.Proto,

@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/spf13/viper"
 )
@@ -13,11 +14,13 @@ type Config struct {
 	HideIP   bool
 	Auth     []string
 	Logging  []string
+	Timeout  time.Duration
 }
 
 var defaults = map[string]interface{}{
-	"hideIP":  false,
-	"logging": []string{},
+	"hideIP":         false,
+	"logging":        []string{},
+	"server.timeout": time.Second * 30,
 }
 
 func init() {
@@ -41,6 +44,7 @@ func LoadConfig(path string) (*Config, error) {
 		HideIP:   viper.GetBool("hideIP"),
 		Auth:     viper.GetStringSlice("server.auth"),
 		Logging:  viper.GetStringSlice("logging"),
+		Timeout:  viper.GetDuration("server.timeout"),
 	}, nil
 }
 

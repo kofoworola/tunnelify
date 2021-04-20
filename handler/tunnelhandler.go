@@ -7,7 +7,6 @@ import (
 	"net"
 	"net/http"
 	"sync"
-	"time"
 
 	"github.com/kofoworola/tunnelify/config"
 	"github.com/kofoworola/tunnelify/logging"
@@ -109,7 +108,7 @@ func readAndWrite(logger *logging.Logger, readFrom io.Reader, writeTo io.Writer)
 }
 
 func (h *TunnelHandler) setupOutbound() (func() error, error) {
-	conn, err := net.DialTimeout("tcp", h.serverURL, time.Second*30)
+	conn, err := net.DialTimeout("tcp", h.serverURL, h.cfg.Timeout)
 	if err != nil {
 		return nil, err
 	}
