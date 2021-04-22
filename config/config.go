@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -21,6 +22,7 @@ var defaults = map[string]interface{}{
 	"hideIP":         false,
 	"logging":        []string{},
 	"server.timeout": time.Second * 30,
+	"server.auth":    []string{},
 }
 
 func init() {
@@ -46,6 +48,13 @@ func LoadConfig(path string) (*Config, error) {
 		Logging:  viper.GetStringSlice("logging"),
 		Timeout:  viper.GetDuration("server.timeout"),
 	}, nil
+}
+
+func (c *Config) Validate() error {
+	if c.HostName == "" {
+		return errors.New("server.host value can not be empty")
+	}
+	return nil
 }
 
 func (c *Config) CheckAuthString(auth string) bool {

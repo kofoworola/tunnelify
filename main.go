@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"log"
 	"os"
 	"os/signal"
 
@@ -31,21 +31,21 @@ func main() {
 	case start.FullCommand():
 		config, err := config.LoadConfig(*configFile)
 		if err != nil {
-			panic(err)
+			log.Fatalf("error loading configuration: %v", err)
 		}
 		server, err := NewServer(config)
 		if err != nil {
-			panic(err)
+			log.Fatalf("error creating server: %v", err)
 		}
 		go func() {
-			fmt.Println("server starting...")
+			log.Println("starting server")
 			if err := server.Start(); err != nil {
-				panic(err)
+				log.Fatalf("error starting server: %v", err)
 			}
 		}()
 
 		<-ctx.Done()
-		fmt.Println("shutting down server...")
+		log.Println("shutting down server...")
 		server.Shutdown()
 	}
 }

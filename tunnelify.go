@@ -12,7 +12,6 @@ import (
 )
 
 // TODO allow request on few IP
-// TODO proxy authentication
 
 type Server struct {
 	config   *config.Config
@@ -40,7 +39,6 @@ func NewServer(cfg *config.Config) (*Server, error) {
 
 func (s *Server) Shutdown() {
 	s.listener.Close()
-
 }
 
 func (s *Server) Start() error {

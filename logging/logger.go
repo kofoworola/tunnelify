@@ -50,7 +50,8 @@ func (l *Logger) With(key, val string) *Logger {
 			Key:    key,
 			String: val,
 			Type:   zapcore.StringType,
-		})}
+		}),
+	}
 }
 
 func (l *Logger) Warn(msg string) {
