@@ -45,10 +45,15 @@ func (s *Server) Start() error {
 	// listen to new connections
 	for {
 		c, err := s.listener.Accept()
-		var h handler.ConnectionHandler
 		if err != nil {
 			s.logger.LogError("error accepting a new connection", err)
 			break
+		}
+		var h handler.ConnectionHandler
+
+		// check if allowed
+		if !s.config.ShouldAllowIP(c.RemoteAddr().String()) {
+			continue
 		}
 		// read first line of the connection and use an appropriate handler
 		r := bufio.NewReader(c)

@@ -11,18 +11,17 @@ import (
 )
 
 type Config struct {
-	HostName string
-	HideIP   bool
-	Auth     []string
-	Logging  []string
-	Timeout  time.Duration
+	HostName  string
+	HideIP    bool
+	Auth      []string
+	Logging   []string
+	Timeout   time.Duration
+	AllowedIP []string
 }
 
 var defaults = map[string]interface{}{
 	"hideIP":         false,
-	"logging":        []string{},
 	"server.timeout": time.Second * 30,
-	"server.auth":    []string{},
 }
 
 func init() {
@@ -42,11 +41,12 @@ func LoadConfig(path string) (*Config, error) {
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	return &Config{
-		HostName: viper.GetString("server.host"),
-		HideIP:   viper.GetBool("hideIP"),
-		Auth:     viper.GetStringSlice("server.auth"),
-		Logging:  viper.GetStringSlice("logging"),
-		Timeout:  viper.GetDuration("server.timeout"),
+		HostName:  viper.GetString("server.host"),
+		HideIP:    viper.GetBool("hideIP"),
+		Auth:      viper.GetStringSlice("server.auth"),
+		Logging:   viper.GetStringSlice("logging"),
+		Timeout:   viper.GetDuration("server.timeout"),
+		AllowedIP: viper.GetStringSlice("allowedIP"),
 	}, nil
 }
 
@@ -80,4 +80,24 @@ func (c *Config) CheckAuthString(auth string) bool {
 
 func (c *Config) HasAuth() bool {
 	return len(c.Auth) > 0
+}
+
+func (c *Config) ShouldAllowIP(addr string) bool {
+	if len(c.AllowedIP) < 1 {
+		return true
+	}
+	cutPos := len(addr)
+	if pos := strings.Index(addr, ":"); pos != -1 {
+		cutPos = pos
+	}
+	addr = addr[:cutPos]
+
+	found := false
+	for _, item := range c.AllowedIP {
+		if item == addr {
+			found = true
+			break
+		}
+	}
+	return found
 }
