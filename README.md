@@ -16,6 +16,9 @@ After installing tunnelify, run this to start up the proxy:
 $ tunnelfiy start <PATH TO CONFIG FILE>
 ```
 
+Now the proxy is listening on whatever value is set in your config's `server.host` value and is proxying every request sent through it.
+
+
 ## Configuration
 Recommended configuration format is json, but tunnelify also supports toml and yaml. 
 Config values can also be set via Environment variables. For example, to set the value of `server.host` via 

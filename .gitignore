@@ -1,1 +1,3 @@
 *.json
+tunnelify*
+dist/

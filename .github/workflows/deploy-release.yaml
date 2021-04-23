@@ -1,0 +1,19 @@
+name: deploy-release
+on:
+  release:
+    types: [ published]
+jobs:
+  build-deploy:
+    runs-on: ubuntu-18.04
+    env:
+      GOOS: ${{ matrix.goos }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+      - name: Release 
+        uses: goreleaser/goreleaser-action@v2 
+        with:
+          version: latest
+          args: release --rm-dist       
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}

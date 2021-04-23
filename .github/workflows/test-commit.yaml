@@ -1,0 +1,14 @@
+name: test-commit
+on:
+  push:
+    branches:
+      - main
+jobs:
+  test-build:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+      - run: |
+          go test ./...
+          go build .
