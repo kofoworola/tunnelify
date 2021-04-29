@@ -13,7 +13,7 @@ $ go get github.com/kofoworola/tunnelify
 ## Quickstart
 After installing tunnelify, run this to start up the proxy:
 ```sh
-$ tunnelfiy start <PATH TO CONFIG FILE>
+$ tunnelify start <PATH TO CONFIG FILE>
 ```
 
 Now the proxy is listening on whatever value is set in your config's `server.host` value and is proxying every request sent through it.
