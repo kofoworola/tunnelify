@@ -1,14 +1,32 @@
+#TODO: setup build cache
 name: test-commit
 on:
   push:
     branches:
       - main
+  pull_request:
+    types: [opened]
 jobs:
   test-build:
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
-      - run: |
-          go test ./...
-          go build .
+        with:
+          go-version: 1.16
+      - name: Module verify
+        run:  go mod verify
+      - name: Run tests
+        run: go test -v ./...
+      - name: gofmt check
+        #TODO: better solution to failing and displaying than running twice
+        run: |
+          gofmt -s -d .
+          test -z $(gofmt -s -d .)
+      - name: Staticheck analysis
+        run: |
+          export PATH=$PATH:$(go env GOPATH)/bin
+          go get honnef.co/go/tools/cmd/staticcheck@2020.2.1
+          staticcheck ./...
+      - name: Test build
+        run: go build .

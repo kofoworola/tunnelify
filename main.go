@@ -14,8 +14,6 @@ var (
 	app        = kingpin.New("proxify", "A lightweight and easily deployable proxy server written in go")
 	start      = app.Command("start", "start the proxify server.")
 	configFile = start.Arg("config", "config file to start proxify server with.").String()
-
-	verify = app.Command("verify", "validate the configuration file")
 )
 
 func main() {

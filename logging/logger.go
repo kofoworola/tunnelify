@@ -54,12 +54,11 @@ func (l *Logger) With(key, val string) *Logger {
 	}
 }
 
-func (l *Logger) Warn(msg string) {
-	l.logger.Warn(msg)
-}
-
-// TODO combine this and above
-func (l *Logger) WarnError(msg string, err error) {
+func (l *Logger) Warn(msg string, err error) {
+	if err == nil {
+		l.logger.Warn(msg)
+		return
+	}
 	l.logger.Warn(
 		msg,
 		zapcore.Field{
@@ -67,4 +66,5 @@ func (l *Logger) WarnError(msg string, err error) {
 			String: err.Error(),
 			Type:   zapcore.StringType,
 		})
+
 }

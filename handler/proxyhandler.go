@@ -2,7 +2,6 @@ package handler
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -12,8 +11,6 @@ import (
 	"github.com/kofoworola/tunnelify/config"
 	"github.com/kofoworola/tunnelify/logging"
 )
-
-var invalidRequestFormat = errors.New("invalid request format")
 
 // Header Keys
 const (
@@ -43,8 +40,6 @@ type ProxyHandler struct {
 	cfg      *config.Config
 }
 
-// TODO add timeout to config
-// TODO add dial timout to config
 func NewProxyHandler(reader io.ReadWriter, originIp string, config *config.Config, closeFunc CloseFunc) *ProxyHandler {
 	// the reason we don't dial initially to the server is to prevent a bottleneck
 	// for multiple proxy connections coming in
@@ -67,17 +62,16 @@ func (p *ProxyHandler) Handle(logger *logging.Logger) {
 				p.connClose()
 				return
 			}
-			logger.Warn("error parsing request")
+			logger.Warn("error parsing request", nil)
 			return
 		}
 
 		// setup outgoing connection if it hasn't been setUp
-		// TODO return proper response to client
 		if p.outgoing == nil {
 			addr := fmt.Sprintf("%s:%s", req.URL.Host, req.URL.Scheme)
 			conn, err := net.DialTimeout("tcp", addr, p.cfg.Timeout)
 			if err != nil {
-				logger.Warn("error dialing destination server")
+				logger.Warn("error dialing destination server", nil)
 				p.connClose()
 				break
 			}
@@ -95,18 +89,17 @@ func (p *ProxyHandler) Handle(logger *logging.Logger) {
 				http.Header{
 					proxyAuthenticate: {`Basic realm="Access to the internal site"`},
 				}); err != nil {
-				logger.Warn("error writing response")
+				logger.Warn("error writing response", nil)
 			}
 			continue
 		}
 
-		// TODO consider combinging these two (do not attempt to parse URL to url.URL)
 		if err := p.prepareRequest(req); err != nil {
-			logger.WarnError("error forwarding request", err)
+			logger.Warn("error forwarding request", err)
 			continue
 		}
 		if err := req.Write(p.outgoing); err != nil {
-			logger.WarnError("error forwarding request", err)
+			logger.Warn("error forwarding request", err)
 			continue
 		}
 		shouldClose := p.shouldCloseConnection(req)
@@ -115,7 +108,7 @@ func (p *ProxyHandler) Handle(logger *logging.Logger) {
 		}
 	}
 	if err := p.connClose(); err != nil {
-		logger.Warn("error closing connection")
+		logger.Warn("error closing connection", nil)
 	}
 }
 
@@ -127,12 +120,12 @@ func (p *ProxyHandler) listenToServerIncoming(logger *logging.Logger) {
 			if err == io.EOF {
 				break
 			}
-			logger.WarnError("could not read response from server", err)
+			logger.Warn("could not read response from server", err)
 			break
 		}
 		// TODO fix code reaching here
 		if _, err := p.incoming.Write(line); err != nil {
-			logger.WarnError("error writing to client", err)
+			logger.Warn("error writing to client", err)
 		}
 	}
 }
@@ -175,8 +168,5 @@ func (p *ProxyHandler) shouldCloseConnection(req *http.Request) bool {
 			break
 		}
 	}
-	if found {
-		return true
-	}
-	return false
+	return found
 }

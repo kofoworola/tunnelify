@@ -44,7 +44,7 @@ func (h *TunnelHandler) Handle(logger *logging.Logger) {
 	// get first req
 	req, err := http.ReadRequest(bufio.NewReader(h.incoming))
 	if err != nil {
-		logger.Warn("could not read request")
+		logger.Warn("could not read request", nil)
 		return
 	}
 	// check the authorization
@@ -56,7 +56,7 @@ func (h *TunnelHandler) Handle(logger *logging.Logger) {
 			http.Header{
 				proxyAuthenticate: {`Basic realm="Access to the internal site"`},
 			}); err != nil {
-			logger.WarnError("error writing response", err)
+			logger.Warn("error writing response", err)
 		}
 		return
 
@@ -65,7 +65,7 @@ func (h *TunnelHandler) Handle(logger *logging.Logger) {
 	if h.outgoing == nil {
 		c, err := h.setupOutbound()
 		if err != nil {
-			logger.WarnError("could not setup outbound", err)
+			logger.Warn("could not setup outbound", err)
 			return
 		}
 		defer c()
@@ -91,14 +91,14 @@ func readAndWrite(logger *logging.Logger, readFrom io.Reader, writeTo io.Writer)
 		if err != nil {
 			shouldBreak = true
 			if err != io.EOF {
-				logger.WarnError("couldn't read bytes", err)
+				logger.Warn("couldn't read bytes", err)
 				break
 			}
 		}
 		dat = dat[:n]
 
 		if _, err := writeTo.Write(dat); err != nil {
-			logger.WarnError("couldn't write bytes", err)
+			logger.Warn("couldn't write bytes", err)
 			break
 		}
 		if shouldBreak {
