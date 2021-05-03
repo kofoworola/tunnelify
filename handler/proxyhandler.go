@@ -88,7 +88,7 @@ func (p *ProxyHandler) Handle(logger *logging.Logger) {
 
 		// check the authorization
 		if !checkAuthorization(p.cfg, req) {
-			if err := writeResponse(
+			if err := WriteResponse(
 				p.incoming,
 				req.Proto,
 				"407 Proxy Authentication Required",

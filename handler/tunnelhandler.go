@@ -49,7 +49,7 @@ func (h *TunnelHandler) Handle(logger *logging.Logger) {
 	}
 	// check the authorization
 	if !checkAuthorization(h.cfg, req) {
-		if err := writeResponse(
+		if err := WriteResponse(
 			h.incoming,
 			req.Proto,
 			"407 Proxy Authentication Required",

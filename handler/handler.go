@@ -17,7 +17,7 @@ type ConnectionHandler interface {
 	Handle(logger *logging.Logger)
 }
 
-func writeResponse(out io.Writer, version string, status string, header http.Header) error {
+func WriteResponse(out io.Writer, version string, status string, header http.Header) error {
 	var builder strings.Builder
 	if _, err := builder.WriteString(fmt.Sprintf("%s %s\n", version, status)); err != nil {
 		return err

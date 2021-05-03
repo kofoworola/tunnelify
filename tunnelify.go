@@ -53,6 +53,7 @@ func (s *Server) Start() error {
 
 		// check if allowed
 		if !s.config.ShouldAllowIP(c.RemoteAddr().String()) {
+			handler.WriteResponse(c, "HTTP/1.1", "403 Forbidden", nil)
 			c.Close()
 			continue
 		}
