@@ -5,7 +5,22 @@ Tunnelify is a deployable proxy server and tunnel written in go
 
 
 ## Installing
-For now, you can only install tunnelify using `go get`. To install, run:
+
+### Direct download
+You can install tunnelify by manually downloading the executable for your operating system via the releases page with:
+```sh
+$ wget https://github.com/kofoworola/tunnelify/releases/download/v0.1.0/tunnelify_0.1.0_mac_x86_64.tar.gz
+```
+
+Then extract it to your preferred location with:
+```sh
+$ tar -xf https://github.com/kofoworola/tunnelify/releases/download/v0.1.0/tunnelify_0.1.0_mac_x86_64.tar.gz
+```
+
+
+### Using go get
+You can use go get to compile and install tunnelify directly to your `$GOPATH/bin`
+
 ```sh
 $ go get github.com/kofoworola/tunnelify
 ```
@@ -33,4 +48,5 @@ change to upper case.
 | `server.timeout` | duration| Amount of time the proxy will attempt to establish an outbound connection for | 30s |
 | `hideIP` | boolean | Hide the IP of the source of the request | false |
 | `logging` | []string | An array of file or URL paths to write logging to (logs are written to `stderr` regardless | [] |
+| `allowedIP` | []string| An array of IPs that should be allowed to access the server. Nil or empty means no IP filtering will be in place | [] |
 

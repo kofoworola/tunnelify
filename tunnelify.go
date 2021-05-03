@@ -53,6 +53,7 @@ func (s *Server) Start() error {
 
 		// check if allowed
 		if !s.config.ShouldAllowIP(c.RemoteAddr().String()) {
+			c.Close()
 			continue
 		}
 		// read first line of the connection and use an appropriate handler
