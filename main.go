@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"log"
+	"net"
+	"net/http"
 	"os"
 	"os/signal"
 
@@ -31,19 +33,38 @@ func main() {
 		if err != nil {
 			log.Fatalf("error loading configuration: %v", err)
 		}
-		server, err := NewServer(config)
+		gateway, err := NewGateway(config)
 		if err != nil {
 			log.Fatalf("error creating server: %v", err)
 		}
 		go func() {
 			log.Println("starting server")
-			if err := server.Start(); err != nil {
+			if err := gateway.Start(); err != nil {
 				log.Fatalf("error starting server: %v", err)
+			}
+		}()
+
+		go func() {
+			log.Println("starting liveness server")
+			if err := StartServer(config, gateway); err != nil {
+				log.Fatalf("error running liveness server: %v", err)
 			}
 		}()
 
 		<-ctx.Done()
 		log.Println("shutting down server...")
-		server.Shutdown()
+		gateway.Close()
 	}
+}
+
+func StartServer(cfg *config.Config, listener net.Listener) error {
+	if cfg.LivenessStatus == 0 {
+		return nil
+	}
+	http.HandleFunc("/", func(writer http.ResponseWriter, req *http.Request) {
+		writer.WriteHeader(cfg.LivenessStatus)
+		writer.Write([]byte(cfg.LivenessBody))
+	})
+
+	return http.Serve(listener, http.DefaultServeMux)
 }

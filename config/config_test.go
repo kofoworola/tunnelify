@@ -20,9 +20,10 @@ func TestConfigCreatedViaEnv(t *testing.T) {
 		}
 	}
 	want := &Config{
-		HostName: osConfigValue["SERVER_HOST"],
-		HideIP:   true,
-		Timeout:  time.Second * 30,
+		HostName:     osConfigValue["SERVER_HOST"],
+		HideIP:       true,
+		Timeout:      time.Second * 30,
+		LivenessPath: "/",
 	}
 
 	got, err := LoadConfig("")

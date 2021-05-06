@@ -11,17 +11,21 @@ import (
 )
 
 type Config struct {
-	HostName  string
-	HideIP    bool
-	Auth      []string
-	Logging   []string
-	Timeout   time.Duration
-	AllowedIP []string
+	HostName       string
+	HideIP         bool
+	Auth           []string
+	Logging        []string
+	Timeout        time.Duration
+	AllowedIP      []string
+	LivenessStatus int
+	LivenessBody   string
+	LivenessPath   string
 }
 
 var defaults = map[string]interface{}{
-	"hideIP":         false,
-	"server.timeout": time.Second * 30,
+	"hideIP":             false,
+	"server.timeout":     time.Second * 30,
+	"server.health.path": "/",
 }
 
 func init() {
@@ -41,12 +45,15 @@ func LoadConfig(path string) (*Config, error) {
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	return &Config{
-		HostName:  viper.GetString("server.host"),
-		HideIP:    viper.GetBool("hideIP"),
-		Auth:      viper.GetStringSlice("server.auth"),
-		Logging:   viper.GetStringSlice("logging"),
-		Timeout:   viper.GetDuration("server.timeout"),
-		AllowedIP: viper.GetStringSlice("allowedIP"),
+		HostName:       viper.GetString("server.host"),
+		HideIP:         viper.GetBool("hideIP"),
+		Auth:           viper.GetStringSlice("server.auth"),
+		Logging:        viper.GetStringSlice("logging"),
+		Timeout:        viper.GetDuration("server.timeout"),
+		AllowedIP:      viper.GetStringSlice("allowedIP"),
+		LivenessStatus: viper.GetInt("server.health.status"),
+		LivenessBody:   viper.GetString("server.health.body"),
+		LivenessPath:   viper.GetString("server.health.path"),
 	}, nil
 }
 
