@@ -11,7 +11,7 @@ import (
 )
 
 type Config struct {
-	HostName       string
+	Port           string
 	HideIP         bool
 	Auth           []string
 	Logging        []string
@@ -44,8 +44,8 @@ func LoadConfig(path string) (*Config, error) {
 	}
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	return &Config{
-		HostName:       viper.GetString("server.host"),
+	cfg := &Config{
+		Port:           viper.GetString("server.port"),
 		HideIP:         viper.GetBool("hideIP"),
 		Auth:           viper.GetStringSlice("server.auth"),
 		Logging:        viper.GetStringSlice("logging"),
@@ -54,11 +54,16 @@ func LoadConfig(path string) (*Config, error) {
 		LivenessStatus: viper.GetInt("server.health.status"),
 		LivenessBody:   viper.GetString("server.health.body"),
 		LivenessPath:   viper.GetString("server.health.path"),
-	}, nil
+	}
+
+	if err := cfg.Validate(); err != nil {
+		return nil, err
+	}
+	return cfg, nil
 }
 
 func (c *Config) Validate() error {
-	if c.HostName == "" {
+	if c.Port == "" {
 		return errors.New("server.host value can not be empty")
 	}
 	return nil

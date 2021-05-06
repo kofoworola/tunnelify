@@ -29,9 +29,9 @@ func NewGateway(cfg *config.Config) (*listenerGateway, error) {
 		return nil, fmt.Errorf("error creating logger: %w", err)
 	}
 
-	listener, err := net.Listen("tcp", cfg.HostName)
+	listener, err := net.Listen("tcp", ":"+cfg.Port)
 	if err != nil {
-		return nil, fmt.Errorf("error creating listener for %s: %w", cfg.HostName, err)
+		return nil, fmt.Errorf("error creating listener for %s: %w", cfg.Port, err)
 	}
 
 	return &listenerGateway{

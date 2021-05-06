@@ -11,7 +11,7 @@ import (
 
 func TestConfigCreatedViaEnv(t *testing.T) {
 	osConfigValue := map[string]string{
-		"SERVER_HOST": "localhost:2000",
+		"SERVER_PORT": "2000",
 		"HIDEIP":      "true",
 	}
 	for key, val := range osConfigValue {
@@ -20,7 +20,7 @@ func TestConfigCreatedViaEnv(t *testing.T) {
 		}
 	}
 	want := &Config{
-		HostName:     osConfigValue["SERVER_HOST"],
+		Port:         osConfigValue["SERVER_PORT"],
 		HideIP:       true,
 		Timeout:      time.Second * 30,
 		LivenessPath: "/",

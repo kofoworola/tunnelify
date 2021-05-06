@@ -33,19 +33,18 @@ func main() {
 		if err != nil {
 			log.Fatalf("error loading configuration: %v", err)
 		}
+		log.Printf("server listening on :%s", config.Port)
 		gateway, err := NewGateway(config)
 		if err != nil {
 			log.Fatalf("error creating server: %v", err)
 		}
 		go func() {
-			log.Println("starting server")
 			if err := gateway.Start(); err != nil {
 				log.Fatalf("error starting server: %v", err)
 			}
 		}()
 
 		go func() {
-			log.Println("starting liveness server")
 			if err := StartServer(config, gateway); err != nil {
 				log.Fatalf("error running liveness server: %v", err)
 			}

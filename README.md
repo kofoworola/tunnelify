@@ -43,7 +43,7 @@ change to upper case.
 ### Available config values
 | Name     | Type | Description           | Default |
 |----------|------|-----------------------| ----- |
-| `server.host`| string | Adress the proxy's server will listen on | null|
+| `server.port`| string | Port the proxy's server will listen on | null|
 | `server.auth`| []string| Array of allowed [Basic](https://tools.ietf.org/html/rfc7617) authorization strings in the form `user-id:password`| [] |
 | `server.health.status` | int | Status code to respond with when liveness checks (Get requests to `server.host`) are made, an empty status code means tunnelify will not respond to liveness checks | nil |
 | `server.health.path` | string | URL path to listen to for liveness checks | `/` |
