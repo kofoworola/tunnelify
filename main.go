@@ -60,7 +60,7 @@ func StartServer(cfg *config.Config, listener net.Listener) error {
 	if cfg.LivenessStatus == 0 {
 		return nil
 	}
-	http.HandleFunc("/", func(writer http.ResponseWriter, req *http.Request) {
+	http.HandleFunc(cfg.LivenessPath, func(writer http.ResponseWriter, req *http.Request) {
 		writer.WriteHeader(cfg.LivenessStatus)
 		writer.Write([]byte(cfg.LivenessBody))
 	})

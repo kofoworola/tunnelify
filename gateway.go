@@ -98,7 +98,7 @@ func (l *listenerGateway) Start() error {
 		cr := NewConnectionReader(c, reqLine, bufferContent)
 		if reqDetails[0] == "CONNECT" {
 			h = handler.NewTunnelHandler(l.config, cr, reqDetails[1], strings.TrimSpace(reqDetails[2]), c.Close)
-		} else if reqDetails[0] != "CONNECT" && !strings.HasPrefix("/", reqDetails[1]) {
+		} else if reqDetails[0] != "CONNECT" && !strings.HasPrefix(reqDetails[1], "/") {
 			h = handler.NewProxyHandler(cr, c.RemoteAddr().String(), l.config, c.Close)
 		} else {
 			l.connChan <- cr
