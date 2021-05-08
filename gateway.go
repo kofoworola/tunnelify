@@ -47,6 +47,7 @@ func (l *listenerGateway) Accept() (net.Conn, error) {
 		return nil, l.listenerErr
 	}
 	c := <-l.connChan
+	l.logger.Debug("connection forwarded to liveness server")
 	return c, nil
 }
 
@@ -62,6 +63,7 @@ func (l *listenerGateway) Start() error {
 			l.logger.LogError("error accepting a new connection", err)
 			break
 		}
+		l.logger.Debug("received new connection")
 		var h handler.ConnectionHandler
 
 		// read first line of the connection and use an appropriate handler

@@ -20,6 +20,7 @@ type Config struct {
 	LivenessStatus int
 	LivenessBody   string
 	LivenessPath   string
+	Debug          bool
 }
 
 var defaults = map[string]interface{}{
@@ -54,6 +55,7 @@ func LoadConfig(path string) (*Config, error) {
 		LivenessStatus: viper.GetInt("server.health.status"),
 		LivenessBody:   viper.GetString("server.health.body"),
 		LivenessPath:   viper.GetString("server.health.path"),
+		Debug:          viper.GetBool("debug"),
 	}
 
 	if err := cfg.Validate(); err != nil {

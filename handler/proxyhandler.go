@@ -65,6 +65,7 @@ func (p *ProxyHandler) Handle(logger *logging.Logger) {
 			logger.Warn("error parsing request", nil)
 			return
 		}
+		logger.Debug("received new request")
 
 		// setup outgoing connection if it hasn't been setUp
 		if p.outgoing == nil {
@@ -82,6 +83,7 @@ func (p *ProxyHandler) Handle(logger *logging.Logger) {
 
 		// check the authorization
 		if !checkAuthorization(p.cfg, req) {
+			logger.Debug("request not authorized")
 			if err := WriteResponse(
 				p.incoming,
 				req.Proto,

@@ -43,6 +43,7 @@ change to upper case.
 ### Available config values
 | Name     | Type | Description           | Default |
 |----------|------|-----------------------| ----- |
+| `debug` | boolean | If set to true, debug log will be sent along side warning and error logs | `false` |
 | `server.port`| string | Port the proxy's server will listen on | null|
 | `server.auth`| []string| Array of allowed [Basic](https://tools.ietf.org/html/rfc7617) authorization strings in the form `user-id:password`| [] |
 | `server.health.status` | int | Status code to respond with when liveness checks (Get requests to `server.host`) are made, an empty status code means tunnelify will not respond to liveness checks | nil |

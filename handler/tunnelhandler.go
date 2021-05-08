@@ -49,6 +49,7 @@ func (h *TunnelHandler) Handle(logger *logging.Logger) {
 	}
 	// check the authorization
 	if !checkAuthorization(h.cfg, req) {
+		logger.Debug("connection not authorized")
 		if err := WriteResponse(
 			h.incoming,
 			req.Proto,

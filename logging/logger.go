@@ -9,7 +9,7 @@ import (
 )
 
 type Logger struct {
-	logger *zap.Logger
+	*zap.Logger
 }
 
 func NewLogger(cfg *config.Config) (*Logger, error) {
@@ -24,6 +24,9 @@ func NewLogger(cfg *config.Config) (*Logger, error) {
 		EncoderConfig: prodEncoderConfig,
 		OutputPaths:   logPaths,
 	}
+	if cfg.Debug {
+		config.Level = zap.NewAtomicLevelAt(zapcore.DebugLevel)
+	}
 
 	logger, err := config.Build()
 	if err != nil {
@@ -34,7 +37,7 @@ func NewLogger(cfg *config.Config) (*Logger, error) {
 
 func (l *Logger) LogError(msg string, err error) {
 	if err != nil {
-		l.logger.Error(
+		l.Logger.Error(
 			msg,
 			zapcore.Field{
 				Key:    "error",
@@ -46,7 +49,7 @@ func (l *Logger) LogError(msg string, err error) {
 
 func (l *Logger) With(key, val string) *Logger {
 	return &Logger{
-		l.logger.With(zapcore.Field{
+		l.Logger.With(zapcore.Field{
 			Key:    key,
 			String: val,
 			Type:   zapcore.StringType,
@@ -56,10 +59,10 @@ func (l *Logger) With(key, val string) *Logger {
 
 func (l *Logger) Warn(msg string, err error) {
 	if err == nil {
-		l.logger.Warn(msg)
+		l.Logger.Warn(msg)
 		return
 	}
-	l.logger.Warn(
+	l.Logger.Warn(
 		msg,
 		zapcore.Field{
 			Key:    "error",
